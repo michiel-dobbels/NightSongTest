@@ -5,49 +5,97 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null); // 🧠 includes username
   const [loading, setLoading] = useState(true);
 
+  // 🔁 Refresh session on mount
   useEffect(() => {
-    const session = supabase.auth.session(); // <-- FIXED for v1
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setUser(data?.session?.user ?? null);
+      setLoading(false);
 
-    setUser(session?.user ?? null);
-    setLoading(false);
+      if (data?.session?.user) {
+        await fetchProfile(data.session.user.id);
+      }
+    };
+
+    getSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
     });
 
     return () => {
-      listener?.unsubscribe();
+      listener?.subscription.unsubscribe();
     };
   }, []);
 
+  // 🔐 Sign up
   const signUp = async (email, password, username) => {
-    const { data: signUpData, error } = await supabase.auth.signUp(
-      { email, password },
-      { data: { username } }
-    );
+    const { data: signUpData, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          username, // store in metadata
+        },
+      },
+    });
 
     if (error) {
       console.error('❌ Sign up error:', error);
-      return;
+      return { error };
     }
 
-  const userId = signUpData.user?.id;
-  if (userId) {
-    await supabase.from('profiles').insert({
-      id: userId,
-      username
+    const userId = signUpData.user?.id;
+    if (userId) {
+      await supabase.from('profiles').insert({
+        id: userId,
+        username,
+      });
+    }
+
+    return { error: null };
+  };
+
+  // 🔐 Sign in
+  const signIn = async (email, password) => {
+    const { user, error } = await supabase.auth.signIn({
+      email,
+      password,
     });
-  }
-};
 
 
-  const signIn = (email, password) =>
-    supabase.auth.signIn({ email, password });
+    
+    if (user) {
+      await fetchProfile(user.id);
+    }
+
+    return { error };
+  };
+
+  // 🔍 Fetch profile by ID
+  const fetchProfile = async (userId) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (!error && data) {
+      setProfile(data); // ✅ includes username
+    }
+  };
 
   const value = {
     user,
+    profile,      // ⬅️ includes .username for posts
     loading,
     signUp,
     signIn,
