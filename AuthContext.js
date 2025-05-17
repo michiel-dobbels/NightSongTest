@@ -38,22 +38,18 @@ export function AuthProvider({ children }) {
 
   // 🔐 Sign up
   const signUp = async (email, password, username) => {
-    const { data: signUpData, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username, // store in metadata
-        },
-      },
-    });
+    // supabase-js v1 uses a different signature than v2
+    const { user: newUser, error } = await supabase.auth.signUp(
+      { email, password },
+      { data: { username } }
+    );
 
     if (error) {
       console.error('❌ Sign up error:', error);
       return { error };
     }
 
-    const userId = signUpData.user?.id;
+    const userId = newUser?.id;
     if (userId) {
       await supabase.from('profiles').insert({
         id: userId,
