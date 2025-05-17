@@ -37,7 +37,7 @@ export default function HomeScreen() {
       {
         content: postText,
         user_id: user.id,
-        username: profile.username, // ✅ pulled from your sign-up
+        username: profile.display_name || profile.username,
       },
     ]);
 
