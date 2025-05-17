@@ -81,6 +81,12 @@ export function AuthProvider({ children }) {
     return { error };
   };
 
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setProfile(null);
+  };
+
   // 🔍 Fetch profile by ID
   const fetchProfile = async (userId) => {
     const { data, error } = await supabase
@@ -100,6 +106,7 @@ export function AuthProvider({ children }) {
     loading,
     signUp,
     signIn,
+    signOut,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
