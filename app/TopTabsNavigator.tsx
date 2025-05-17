@@ -23,12 +23,13 @@ const Tab = createMaterialTopTabNavigator();
 
 export default function TopTabsNavigator() {
   const { profile } = useAuth() as any;
+  const displayName = profile?.display_name || profile?.username;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#1d152b' }}>
       <StatusBar barStyle="light-content" backgroundColor="#1d152b" />
       <Text style={{ color: 'white', textAlign: 'center', marginTop: 10 }}>
-        {`Welcome @${profile?.display_name || profile?.username || ''}`}
+        {displayName ? `Welcome @${displayName}` : 'Welcome'}
       </Text>
       <Tab.Navigator
         screenOptions={{
