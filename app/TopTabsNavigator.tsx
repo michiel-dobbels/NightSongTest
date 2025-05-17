@@ -1,6 +1,7 @@
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { View, Text } from 'react-native';
 import { SafeAreaView, StatusBar } from 'react-native';
+import { useAuth } from '../AuthContext';
 
 function ForYouScreen() {
   return (
@@ -21,9 +22,14 @@ function FollowingScreen() {
 const Tab = createMaterialTopTabNavigator();
 
 export default function TopTabsNavigator() {
+  const { profile } = useAuth() as any;
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#1d152b' }}>
       <StatusBar barStyle="light-content" backgroundColor="#1d152b" />
+      <Text style={{ color: 'white', textAlign: 'center', marginTop: 10 }}>
+        {`Welcome @${profile?.username || ''}`}
+      </Text>
       <Tab.Navigator
         screenOptions={{
           tabBarStyle: {
