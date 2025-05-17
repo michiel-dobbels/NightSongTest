@@ -15,9 +15,13 @@ export default function HomePage() {
     }
   }, [profile]);
 
+  const displayName = profile?.display_name;
+
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Welcome, {profile?.email || 'guest'}!</Text>
+      <Text style={styles.text}>
+        {displayName ? `Welcome @${displayName}` : `Welcome, ${profile?.email || 'guest'}!`}
+      </Text>
 
       <Button
         title="Go to For You"

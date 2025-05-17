@@ -23,7 +23,8 @@ const Tab = createMaterialTopTabNavigator();
 
 export default function TopTabsNavigator() {
   const { profile } = useAuth() as any;
-  const displayName = profile?.display_name || profile?.username;
+  // Prefer the display name from the user's profile
+  const displayName = profile?.display_name;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#1d152b' }}>
