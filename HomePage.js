@@ -21,7 +21,6 @@ export default function HomePage() {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
-
         {displayName ? `Welcome @${displayName}` : 'Welcome'}
 
       </Text>
