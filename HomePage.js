@@ -17,10 +17,12 @@ export default function HomePage() {
 
   const displayName = profile?.display_name || profile?.username;
 
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
         {displayName ? `Welcome @${displayName}` : 'Welcome'}
+
       </Text>
 
       <Button
