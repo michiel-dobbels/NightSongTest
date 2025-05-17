@@ -73,9 +73,10 @@ export function AuthProvider({ children }) {
       password,
     });
 
-
-    
     if (user) {
+      // Immediately store the authenticated user
+      setUser(user);
+      // Load the profile so display name and username are available
       await fetchProfile(user.id);
     }
 
@@ -101,7 +102,9 @@ export function AuthProvider({ children }) {
       .single();
 
     if (!error && data) {
-      setProfile(data); // ✅ includes username
+      // Merge the Supabase auth email so other screens can rely on it
+      const authUser = supabase.auth.user();
+      setProfile({ ...data, email: authUser?.email });
     }
   };
 
