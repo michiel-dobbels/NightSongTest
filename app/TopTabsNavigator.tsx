@@ -28,7 +28,7 @@ export default function TopTabsNavigator() {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#1d152b' }}>
       <StatusBar barStyle="light-content" backgroundColor="#1d152b" />
       <Text style={{ color: 'white', textAlign: 'center', marginTop: 10 }}>
-        {`Welcome @${profile?.username || ''}`}
+        {`Welcome @${profile?.display_name || profile?.username || ''}`}
       </Text>
       <Tab.Navigator
         screenOptions={{
