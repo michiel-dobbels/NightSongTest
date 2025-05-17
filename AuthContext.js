@@ -11,12 +11,13 @@ export function AuthProvider({ children }) {
   // 🔁 Refresh session on mount
   useEffect(() => {
     const getSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setUser(data?.session?.user ?? null);
+      // supabase-js v1 exposes `session()` to fetch the current session
+      const session = supabase.auth.session();
+      setUser(session?.user ?? null);
       setLoading(false);
 
-      if (data?.session?.user) {
-        await fetchProfile(data.session.user.id);
+      if (session?.user) {
+        await fetchProfile(session.user.id);
       }
     };
 
@@ -72,20 +73,23 @@ export function AuthProvider({ children }) {
       password,
     });
 
-
-    
     if (user) {
+      // Immediately store the authenticated user
+      setUser(user);
+      // Load the profile so display name and username are available
       await fetchProfile(user.id);
     }
 
     return { error };
   };
 
+
   // 🚪 Sign out
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
+
   };
 
   // 🔍 Fetch profile by ID
@@ -97,7 +101,9 @@ export function AuthProvider({ children }) {
       .single();
 
     if (!error && data) {
-      setProfile(data); // ✅ includes username
+      // Merge the Supabase auth email so other screens can rely on it
+      const authUser = supabase.auth.user();
+      setProfile({ ...data, email: authUser?.email });
     }
   };
 
