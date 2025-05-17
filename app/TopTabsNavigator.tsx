@@ -23,6 +23,7 @@ const Tab = createMaterialTopTabNavigator();
 
 export default function TopTabsNavigator() {
   const { profile } = useAuth() as any;
+  // Prefer the display name from the user's profile and fallback to the username
   const displayName = profile?.display_name || profile?.username;
 
   return (
