@@ -22,6 +22,7 @@ function FollowingScreen() {
 const Tab = createMaterialTopTabNavigator();
 
 export default function TopTabsNavigator() {
+
   const { user, profile } = useAuth() as any;
   // Prefer the display name from the user's profile, then username
   const displayName = profile?.display_name || profile?.username;
@@ -32,6 +33,7 @@ export default function TopTabsNavigator() {
     : user?.email
     ? `Welcome ${user.email}`
     : 'Welcome';
+
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#1d152b' }}>
