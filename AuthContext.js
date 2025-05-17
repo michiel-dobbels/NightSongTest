@@ -4,6 +4,7 @@ import { supabase } from './lib/supabase';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
+  const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null); // 🧠 includes username
   const [loading, setLoading] = useState(true);
@@ -11,18 +12,21 @@ export function AuthProvider({ children }) {
   // 🔁 Refresh session on mount
   useEffect(() => {
     const getSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setUser(data?.session?.user ?? null);
+      // supabase-js v1 exposes `session()` to fetch the current session
+      const currentSession = supabase.auth.session();
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
       setLoading(false);
 
-      if (data?.session?.user) {
-        await fetchProfile(data.session.user.id);
+      if (currentSession?.user) {
+        await fetchProfile(currentSession.user.id);
       }
     };
 
     getSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
@@ -43,7 +47,7 @@ export function AuthProvider({ children }) {
     }
 
     // supabase-js v1 uses a different signature than v2
-    const { user: newUser, error } = await supabase.auth.signUp(
+    const { user: newUser, session: newSession, error } = await supabase.auth.signUp(
       { email, password },
       { data: { username, display_name: username } }
     );
@@ -60,6 +64,9 @@ export function AuthProvider({ children }) {
         username,
         display_name: username,
       });
+      setSession(newSession);
+      setUser(newUser);
+      await fetchProfile(userId);
     }
 
     return { error: null };
@@ -67,7 +74,7 @@ export function AuthProvider({ children }) {
 
   // 🔐 Sign in
   const signIn = async (email, password) => {
-    const { user, error } = await supabase.auth.signIn({
+    const { user, session: signInSession, error } = await supabase.auth.signIn({
       email,
       password,
     });
@@ -75,9 +82,21 @@ export function AuthProvider({ children }) {
 
     
     if (user) {
+      setSession(signInSession);
       await fetchProfile(user.id);
     }
 
+    return { error };
+  };
+
+  // 🔓 Sign out
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (!error) {
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+    }
     return { error };
   };
 
@@ -95,11 +114,13 @@ export function AuthProvider({ children }) {
   };
 
   const value = {
+    session,
     user,
-    profile,      // ⬅️ includes .username for posts
+    profile,      // ⬅
     loading,
     signUp,
     signIn,
+    signOut,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -22,15 +22,15 @@ function FollowingScreen() {
 const Tab = createMaterialTopTabNavigator();
 
 export default function TopTabsNavigator() {
-  const { profile } = useAuth() as any;
-  // Prefer the display name from the user's profile
-  const displayName = profile?.display_name;
+  const { profile, user, loading } = useAuth() as any;
+  // Prefer the display name or username from the user's profile
+  const displayName = profile?.display_name || profile?.username || user?.email;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#1d152b' }}>
       <StatusBar barStyle="light-content" backgroundColor="#1d152b" />
       <Text style={{ color: 'white', textAlign: 'center', marginTop: 10 }}>
-        {displayName ? `Welcome @${displayName}` : 'Welcome'}
+        {loading ? 'Welcome' : displayName ? `Welcome @${displayName}` : 'Welcome'}
       </Text>
       <Tab.Navigator
         screenOptions={{
