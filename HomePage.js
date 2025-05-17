@@ -10,17 +10,20 @@ export default function HomePage() {
 
   // Block access if no user is logged in
   useEffect(() => {
-    if (!profile?.email) {
+    if (!profile) {
       navigation.navigate('Auth');
     }
   }, [profile]);
 
-  const displayName = profile?.display_name;
+  const displayName = profile?.display_name || profile?.username;
+
 
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
-        {displayName ? `Welcome @${displayName}` : `Welcome, ${profile?.email || 'guest'}!`}
+
+        {displayName ? `Welcome @${displayName}` : 'Welcome'}
+
       </Text>
 
       <Button
