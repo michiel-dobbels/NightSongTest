@@ -80,6 +80,7 @@ export default function HomeScreen() {
       .select(
         `id, content, user_id, created_at, profiles (username, display_name)`
       )
+
       .single();
 
     if (error || !data) {
@@ -97,10 +98,12 @@ export default function HomeScreen() {
               ...p,
               id: data.id,
               created_at: data.created_at,
+
               username:
                 data.profiles?.display_name ||
                 data.profiles?.username ||
                 p.username,
+
             }
           : p
       )
