@@ -33,10 +33,23 @@ export default function HomeScreen() {
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('posts')
-      .select('*')
+      .select(
+        `id, content, user_id, created_at, profiles (username, display_name)`
+      )
       .order('created_at', { ascending: false });
 
-    if (!error && data) setPosts(data as Post[]);
+    if (!error && data) {
+      setPosts(
+        data.map((row: any) => ({
+          id: row.id,
+          content: row.content,
+          user_id: row.user_id,
+          created_at: row.created_at,
+          username:
+            row.profiles?.display_name || row.profiles?.username || 'unknown',
+        }))
+      );
+    }
   };
 
   const handlePost = async () => {
@@ -56,24 +69,28 @@ export default function HomeScreen() {
     setPosts((prev) => [newPost, ...prev]);
     setPostText('');
 
+
     const { data, error } = await supabase
+
       .from('posts')
       .insert([
         {
           content: postText,
           user_id: user.id,
-          username: profile.display_name || profile.username,
         },
+
       ])
       .select()
       .single();
 
     if (error || !data) {
+
       // Remove the optimistic post if the request fails
       setPosts((prev) => prev.filter((p) => p.id !== newPost.id));
       console.error('Failed to post:', error);
       return;
     }
+
 
     // Update the optimistic post with the real data from Supabase
     setPosts((prev) =>
@@ -89,6 +106,7 @@ export default function HomeScreen() {
     );
 
     // Refresh from the server in the background to stay in sync
+
     fetchPosts();
   };
 
