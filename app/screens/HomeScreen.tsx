@@ -33,10 +33,23 @@ export default function HomeScreen() {
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('posts')
-      .select('*')
+      .select(
+        `id, content, user_id, created_at, profiles (username, display_name)`
+      )
       .order('created_at', { ascending: false });
 
-    if (!error && data) setPosts(data as Post[]);
+    if (!error && data) {
+      setPosts(
+        data.map((row: any) => ({
+          id: row.id,
+          content: row.content,
+          user_id: row.user_id,
+          created_at: row.created_at,
+          username:
+            row.profiles?.display_name || row.profiles?.username || 'unknown',
+        }))
+      );
+    }
   };
 
   const handlePost = async () => {
@@ -62,10 +75,12 @@ export default function HomeScreen() {
         {
           content: postText,
           user_id: user.id,
-          username: profile.display_name || profile.username,
         },
       ])
-      .select()
+      .select(
+        `id, content, user_id, created_at, profiles (username, display_name)`
+      )
+
       .single();
 
     if (error || !data) {
@@ -83,6 +98,12 @@ export default function HomeScreen() {
               ...p,
               id: data.id,
               created_at: data.created_at,
+
+              username:
+                data.profiles?.display_name ||
+                data.profiles?.username ||
+                p.username,
+
             }
           : p
       )
