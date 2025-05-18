@@ -10,8 +10,19 @@ type Post = {
   created_at: string;
 };
 
+function timeAgo(dateString: string): string {
+  const diff = Date.now() - new Date(dateString).getTime();
+  const minutes = Math.floor(diff / (1000 * 60));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 export default function HomeScreen() {
-  const { session, profile } = useAuth(); // assuming profile contains username
+  const { user, profile } = useAuth();
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
 
@@ -24,26 +35,38 @@ export default function HomeScreen() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error) setPosts(data);
+    if (!error && data) setPosts(data as Post[]);
   };
 
   const handlePost = async () => {
     if (!postText.trim()) return;
-
-    const user = session?.user;
     if (!user) return;
 
-    const { error } = await supabase.from('posts').insert([
-      {
-        content: postText,
-        user_id: user.id,
-        username: profile.display_name || profile.username,
-      },
-    ]);
+    const { data, error } = await supabase
+      .from('posts')
+      .insert([
+        {
+          content: postText,
+          user_id: user.id,
+          username: profile.display_name || profile.username,
+        },
+      ])
+      .select()
+      .single();
 
-    if (!error) {
+    if (!error && data) {
+      const newPost: Post = {
+        id: data.id,
+        content: data.content,
+        username: data.username,
+        created_at: data.created_at,
+      };
+
+      // Optimistically update the feed so the post appears immediately
+      setPosts((prev) => [newPost, ...prev]);
       setPostText('');
-      fetchPosts(); // refresh feed
+      // Refresh from the server in the background to stay in sync
+      fetchPosts();
     }
   };
 
@@ -70,7 +93,7 @@ export default function HomeScreen() {
           <View style={styles.post}>
             <Text style={styles.username}>@{item.username}</Text>
             <Text>{item.content}</Text>
-            <Text style={styles.timestamp}>{new Date(item.created_at).toLocaleString()}</Text>
+            <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
           </View>
         )}
       />
