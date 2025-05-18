@@ -69,7 +69,8 @@ export default function HomeScreen() {
     setPosts((prev) => [newPost, ...prev]);
     setPostText('');
 
-    const { error } = await supabase
+
+    const { data, error } = await supabase
 
       .from('posts')
       .insert([
@@ -78,9 +79,11 @@ export default function HomeScreen() {
           user_id: user.id,
         },
 
-      ]);
+      ])
+      .select()
+      .single();
 
-    if (error) {
+    if (error || !data) {
 
       // Remove the optimistic post if the request fails
       setPosts((prev) => prev.filter((p) => p.id !== newPost.id));
@@ -88,7 +91,21 @@ export default function HomeScreen() {
       return;
     }
 
-    // Refresh from the server in the background to sync the ID and timestamp
+
+    // Update the optimistic post with the real data from Supabase
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === newPost.id
+          ? {
+              ...p,
+              id: data.id,
+              created_at: data.created_at,
+            }
+          : p
+      )
+    );
+
+    // Refresh from the server in the background to stay in sync
 
     fetchPosts();
   };
