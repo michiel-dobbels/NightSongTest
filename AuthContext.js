@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
     // supabase-js v1 uses a different signature than v2
     const { user: newUser, error } = await supabase.auth.signUp(
       { email, password },
-      { data: { username, display_name: username } }
+      { data: { username } }
     );
 
     if (error) {
@@ -62,7 +62,6 @@ export function AuthProvider({ children }) {
       const { error: profileError } = await supabase.from('profiles').insert({
         id: userId,
         username,
-        display_name: username,
       });
 
       if (profileError) {
@@ -82,7 +81,6 @@ export function AuthProvider({ children }) {
       setProfile({
         id: userId,
         username,
-        display_name: username,
         email: newUser.email,
       });
     }
