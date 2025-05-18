@@ -69,47 +69,27 @@ export default function HomeScreen() {
     setPosts((prev) => [newPost, ...prev]);
     setPostText('');
 
-    const { data, error } = await supabase
+    const { error } = await supabase
+
       .from('posts')
       .insert([
         {
           content: postText,
           user_id: user.id,
         },
-      ])
-      .select(
-        `id, content, user_id, created_at, profiles (username, display_name)`
-      )
 
-      .single();
+      ]);
 
-    if (error || !data) {
+    if (error) {
+
       // Remove the optimistic post if the request fails
       setPosts((prev) => prev.filter((p) => p.id !== newPost.id));
       console.error('Failed to post:', error);
       return;
     }
 
-    // Update the optimistic post with the real data from Supabase
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === newPost.id
-          ? {
-              ...p,
-              id: data.id,
-              created_at: data.created_at,
+    // Refresh from the server in the background to sync the ID and timestamp
 
-              username:
-                data.profiles?.display_name ||
-                data.profiles?.username ||
-                p.username,
-
-            }
-          : p
-      )
-    );
-
-    // Refresh from the server in the background to stay in sync
     fetchPosts();
   };
 
