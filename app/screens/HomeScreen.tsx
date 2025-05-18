@@ -7,6 +7,7 @@ type Post = {
   id: string;
   content: string;
   username: string;
+  user_id: string;
   created_at: string;
 };
 
@@ -40,6 +41,7 @@ export default function HomeScreen() {
 
   const handlePost = async () => {
     if (!postText.trim()) return;
+
     if (!user) return;
 
     const { data, error } = await supabase
@@ -51,6 +53,7 @@ export default function HomeScreen() {
           username: profile.display_name || profile.username,
         },
       ])
+
       .select()
       .single();
 
@@ -67,6 +70,7 @@ export default function HomeScreen() {
       setPostText('');
       // Refresh from the server in the background to stay in sync
       fetchPosts();
+
     }
   };
 
