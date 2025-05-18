@@ -23,7 +23,7 @@ const Tab = createMaterialTopTabNavigator();
 
 export default function TopTabsNavigator() {
 
-  const { profile } = useAuth() as any;
+  const { profile, user } = useAuth() as any;
 
   const displayName = profile?.display_name || profile?.username;
 
