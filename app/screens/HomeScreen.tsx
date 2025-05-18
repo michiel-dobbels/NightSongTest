@@ -53,12 +53,24 @@ export default function HomeScreen() {
           username: profile.display_name || profile.username,
         },
       ])
+
+      .select()
       .single();
 
     if (!error && data) {
+      const newPost: Post = {
+        id: data.id,
+        content: data.content,
+        username: data.username,
+        created_at: data.created_at,
+      };
+
+      // Optimistically update the feed so the post appears immediately
+      setPosts((prev) => [newPost, ...prev]);
       setPostText('');
-      // optimistically update feed without refetching
-      setPosts((prev) => [data as Post, ...prev]);
+      // Refresh from the server in the background to stay in sync
+      fetchPosts();
+
     }
   };
 
