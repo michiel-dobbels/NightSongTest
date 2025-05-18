@@ -44,6 +44,18 @@ export default function HomeScreen() {
 
     if (!user) return;
 
+    const newPost: Post = {
+      id: `temp-${Date.now()}`,
+      content: postText,
+      username: profile.display_name || profile.username,
+      user_id: user.id,
+      created_at: new Date().toISOString(),
+    };
+
+    // Show the post immediately
+    setPosts((prev) => [newPost, ...prev]);
+    setPostText('');
+
     const { data, error } = await supabase
       .from('posts')
       .insert([
@@ -53,25 +65,31 @@ export default function HomeScreen() {
           username: profile.display_name || profile.username,
         },
       ])
-
       .select()
       .single();
 
-    if (!error && data) {
-      const newPost: Post = {
-        id: data.id,
-        content: data.content,
-        username: data.username,
-        created_at: data.created_at,
-      };
-
-      // Optimistically update the feed so the post appears immediately
-      setPosts((prev) => [newPost, ...prev]);
-      setPostText('');
-      // Refresh from the server in the background to stay in sync
-      fetchPosts();
-
+    if (error || !data) {
+      // Remove the optimistic post if the request fails
+      setPosts((prev) => prev.filter((p) => p.id !== newPost.id));
+      console.error('Failed to post:', error);
+      return;
     }
+
+    // Update the optimistic post with the real data from Supabase
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === newPost.id
+          ? {
+              ...p,
+              id: data.id,
+              created_at: data.created_at,
+            }
+          : p
+      )
+    );
+
+    // Refresh from the server in the background to stay in sync
+    fetchPosts();
   };
 
   useEffect(() => {
