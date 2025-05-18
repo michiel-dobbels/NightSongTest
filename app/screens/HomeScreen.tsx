@@ -7,6 +7,7 @@ type Post = {
   id: string;
   content: string;
   username: string;
+  user_id: string;
   created_at: string;
 };
 
@@ -35,7 +36,7 @@ export default function HomeScreen() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error) setPosts(data);
+    if (!error && data) setPosts(data as Post[]);
   };
 
   const handlePost = async () => {
@@ -43,17 +44,21 @@ export default function HomeScreen() {
 
     if (!user) return;
 
-    const { error } = await supabase.from('posts').insert([
-      {
-        content: postText,
-        user_id: user.id,
-        username: profile.display_name || profile.username,
-      },
-    ]);
+    const { data, error } = await supabase
+      .from('posts')
+      .insert([
+        {
+          content: postText,
+          user_id: user.id,
+          username: profile.display_name || profile.username,
+        },
+      ])
+      .single();
 
-    if (!error) {
+    if (!error && data) {
       setPostText('');
-      fetchPosts(); // refresh feed
+      // optimistically update feed without refetching
+      setPosts((prev) => [data as Post, ...prev]);
     }
   };
 
