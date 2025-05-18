@@ -61,6 +61,15 @@ export function AuthProvider({ children }) {
         username,
         display_name: username,
       });
+
+      // Immediately store the authenticated user and profile
+      setUser(newUser);
+      setProfile({
+        id: userId,
+        username,
+        display_name: username,
+        email: newUser.email,
+      });
     }
 
     return { error: null };
