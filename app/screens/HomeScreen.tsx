@@ -5,9 +5,11 @@ import { useAuth } from '../../AuthContext';
 
 type Post = {
   id: string;
+  user_id: string;
   content: string;
   username: string;
   user_id: string;
+
   created_at: string;
 };
 
@@ -33,10 +35,13 @@ export default function HomeScreen() {
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('posts')
-      .select('*')
+      .select(
+        `id, content, user_id, created_at, profiles (username, display_name)`
+      )
       .order('created_at', { ascending: false });
 
     if (!error && data) setPosts(data);
+
   };
 
   const handlePost = async () => {
@@ -52,10 +57,12 @@ export default function HomeScreen() {
     };
 
     setPosts([tempPost, ...posts]);
+
     setPostText('');
 
     const { data, error } = await supabase
       .from('posts')
+
       .insert({
         content: tempPost.content,
         user_id: tempPost.user_id,
@@ -73,6 +80,7 @@ export default function HomeScreen() {
     setPosts((current) =>
       current.map((p) => (p.id === tempPost.id ? data : p))
     );
+
   };
 
   useEffect(() => {
