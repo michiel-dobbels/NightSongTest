@@ -8,6 +8,8 @@ type Post = {
   user_id: string;
   content: string;
   username: string;
+  user_id: string;
+
   created_at: string;
 };
 
@@ -33,8 +35,11 @@ export default function HomeScreen() {
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('posts')
-      .select('*')
+      .select(
+        `id, content, user_id, created_at, profiles (username, display_name)`
+      )
       .order('created_at', { ascending: false });
+
 
     if (!error && data) setPosts(data as Post[]);
   };
@@ -68,7 +73,26 @@ export default function HomeScreen() {
       setPosts((prev) =>
         prev.map((p) => (p.id === newPost.id ? (data as Post) : p))
       );
+
     }
+
+
+    // Update the optimistic post with the real data from Supabase
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === newPost.id
+          ? {
+              ...p,
+              id: data.id,
+              created_at: data.created_at,
+            }
+          : p
+      )
+    );
+
+    // Refresh from the server in the background to stay in sync
+
+    fetchPosts();
   };
 
   useEffect(() => {
