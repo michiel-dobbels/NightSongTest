@@ -7,6 +7,7 @@ type Post = {
   id: string;
   content: string;
   username: string;
+  user_id: string;
   created_at: string;
 };
 
@@ -32,10 +33,23 @@ export default function HomeScreen() {
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('posts')
-      .select('*')
+      .select(
+        `id, content, user_id, created_at, profiles (username, display_name)`
+      )
       .order('created_at', { ascending: false });
 
-    if (!error) setPosts(data);
+    if (!error && data) {
+      setPosts(
+        data.map((row: any) => ({
+          id: row.id,
+          content: row.content,
+          user_id: row.user_id,
+          created_at: row.created_at,
+          username:
+            row.profiles?.display_name || row.profiles?.username || 'unknown',
+        }))
+      );
+    }
   };
 
   const handlePost = async () => {
@@ -43,18 +57,57 @@ export default function HomeScreen() {
 
     if (!user) return;
 
-    const { error } = await supabase.from('posts').insert([
-      {
-        content: postText,
-        user_id: user.id,
-        username: profile.display_name || profile.username,
-      },
-    ]);
+    const newPost: Post = {
+      id: `temp-${Date.now()}`,
+      content: postText,
+      username: profile.display_name || profile.username,
+      user_id: user.id,
+      created_at: new Date().toISOString(),
+    };
 
-    if (!error) {
-      setPostText('');
-      fetchPosts(); // refresh feed
+    // Show the post immediately
+    setPosts((prev) => [newPost, ...prev]);
+    setPostText('');
+
+
+    const { data, error } = await supabase
+
+      .from('posts')
+      .insert([
+        {
+          content: postText,
+          user_id: user.id,
+        },
+
+      ])
+      .select()
+      .single();
+
+    if (error || !data) {
+
+      // Remove the optimistic post if the request fails
+      setPosts((prev) => prev.filter((p) => p.id !== newPost.id));
+      console.error('Failed to post:', error);
+      return;
     }
+
+
+    // Update the optimistic post with the real data from Supabase
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === newPost.id
+          ? {
+              ...p,
+              id: data.id,
+              created_at: data.created_at,
+            }
+          : p
+      )
+    );
+
+    // Refresh from the server in the background to stay in sync
+
+    fetchPosts();
   };
 
   useEffect(() => {

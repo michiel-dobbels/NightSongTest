@@ -1,3 +1,4 @@
+
 # NightSongTest
 
 This project uses Supabase for authentication and storing posts.
@@ -15,3 +16,4 @@ required `display_name` column.
 
 After running the scripts, the app can store profiles and posts without the
 `display_name` error.
+=======

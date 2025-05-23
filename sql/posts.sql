@@ -1,3 +1,4 @@
+--for-you--page
 -- Create a posts table that references profiles
 create table if not exists posts (
   id uuid primary key default uuid_generate_v4(),
@@ -8,3 +9,4 @@ create table if not exists posts (
 );
 
 create index if not exists posts_created_at_idx on posts(created_at desc);
+
