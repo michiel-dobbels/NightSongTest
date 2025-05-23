@@ -40,59 +40,47 @@ export default function HomeScreen() {
       )
       .order('created_at', { ascending: false });
 
+    if (!error && data) setPosts(data);
 
-    if (!error && data) setPosts(data as Post[]);
   };
 
   const handlePost = async () => {
     if (!postText.trim()) return;
+    if (!user || !profile) return;
 
-    if (!user) return;
-
-    const text = postText;
-    const newPost: Post = {
+    const tempPost: Post = {
       id: `temp-${Date.now()}`,
+      content: postText,
       user_id: user.id,
-      content: text,
       username: profile.display_name || profile.username,
       created_at: new Date().toISOString(),
     };
 
-    setPosts((prev) => [newPost, ...prev]);
+    setPosts([tempPost, ...posts]);
+
     setPostText('');
 
     const { data, error } = await supabase
       .from('posts')
-      .insert({ content: text, user_id: user.id, username: newPost.username })
-      .select()
+
+      .insert({
+        content: tempPost.content,
+        user_id: tempPost.user_id,
+        username: tempPost.username,
+      })
+      .select('*')
       .single();
 
     if (error || !data) {
-      setPosts((prev) => prev.filter((p) => p.id !== newPost.id));
-    } else {
-      setPosts((prev) =>
-        prev.map((p) => (p.id === newPost.id ? (data as Post) : p))
-      );
-
+      // remove temp post on failure
+      setPosts((current) => current.filter((p) => p.id !== tempPost.id));
+      return;
     }
 
-
-    // Update the optimistic post with the real data from Supabase
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === newPost.id
-          ? {
-              ...p,
-              id: data.id,
-              created_at: data.created_at,
-            }
-          : p
-      )
+    setPosts((current) =>
+      current.map((p) => (p.id === tempPost.id ? data : p))
     );
 
-    // Refresh from the server in the background to stay in sync
-
-    fetchPosts();
   };
 
   useEffect(() => {
