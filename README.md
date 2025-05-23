@@ -1,3 +1,4 @@
+
 # NightSong
 
 This project uses Supabase for authentication and saving posts. Before running the app, create the tables in Supabase.
@@ -8,3 +9,4 @@ This project uses Supabase for authentication and saving posts. Before running t
 The `profiles` table stores user accounts with a `display_name` column. The `posts` table stores each post and references the author by `user_id`.
 
 Run the app with `npm start` (Expo) once the tables exist.
+
