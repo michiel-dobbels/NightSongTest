@@ -7,7 +7,9 @@ type Post = {
   id: string;
   content: string;
   username: string;
-  user_id: string;
+
+  user_id?: string;
+
   created_at: string;
 };
 
@@ -38,18 +40,9 @@ export default function HomeScreen() {
       )
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setPosts(
-        data.map((row: any) => ({
-          id: row.id,
-          content: row.content,
-          user_id: row.user_id,
-          created_at: row.created_at,
-          username:
-            row.profiles?.display_name || row.profiles?.username || 'unknown',
-        }))
-      );
-    }
+
+    if (!error && data) setPosts(data);
+
   };
 
   const handlePost = async () => {
@@ -57,18 +50,19 @@ export default function HomeScreen() {
 
     if (!user) return;
 
-    const newPost: Post = {
-      id: `temp-${Date.now()}`,
+
+    const tempPost: Post = {
+      id: Math.random().toString(),
+
       content: postText,
       username: profile.display_name || profile.username,
       user_id: user.id,
       created_at: new Date().toISOString(),
     };
 
-    // Show the post immediately
-    setPosts((prev) => [newPost, ...prev]);
-    setPostText('');
 
+    setPosts((prev) => [tempPost, ...prev]);
+    setPostText('');
 
     const { data, error } = await supabase
 
@@ -77,18 +71,26 @@ export default function HomeScreen() {
         {
           content: postText,
           user_id: user.id,
+
+          username: profile.display_name || profile.username,
         },
 
       ])
       .select()
       .single();
 
-    if (error || !data) {
 
-      // Remove the optimistic post if the request fails
-      setPosts((prev) => prev.filter((p) => p.id !== newPost.id));
-      console.error('Failed to post:', error);
+    if (error) {
+      // remove optimistic post on failure
+      setPosts((prev) => prev.filter((p) => p.id !== tempPost.id));
       return;
+    }
+
+    if (data) {
+      setPosts((prev) =>
+        prev.map((p) => (p.id === tempPost.id ? data : p))
+      );
+
     }
 
 
