@@ -1,3 +1,4 @@
+--page
 -- Create the profiles table if it doesn't exist and ensure a display_name column
 -- Run this script in the Supabase SQL editor
 
@@ -10,3 +11,4 @@ create table if not exists profiles (
 
 alter table profiles
   add column if not exists display_name text;
+
