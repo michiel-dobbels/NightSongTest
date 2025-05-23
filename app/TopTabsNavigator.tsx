@@ -2,13 +2,10 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 import { View, Text } from 'react-native';
 import { SafeAreaView, StatusBar } from 'react-native';
 import { useAuth } from '../AuthContext';
+import HomeScreen from './screens/HomeScreen';
 
 function ForYouScreen() {
-  return (
-    <View style={{ flex: 1, backgroundColor: '#1d152b', justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ color: 'white' }}>For You Content</Text>
-    </View>
-  );
+  return <HomeScreen />;
 }
 
 function FollowingScreen() {
