@@ -1,19 +1,12 @@
 
-# NightSong React Native App
+# NightSong
 
-This project uses Supabase for authentication and data storage. On first run you may encounter the error:
+This project uses Supabase for authentication and saving posts. Before running the app, create the tables in Supabase.
 
-```
-PGRST204: Could not find the 'display_name' column of 'profiles' in the schema cache
-```
+1. Open the SQL editor in your Supabase project.
+2. Run the contents of `sql/profiles.sql` and `sql/posts.sql`.
 
-This happens when the `profiles` table in your Supabase project does not include a `display_name` column. Run the SQL scripts in the `sql` directory to set up the required tables.
+The `profiles` table stores user accounts with a `display_name` column. The `posts` table stores each post and references the author by `user_id`.
 
-## Applying the SQL scripts
-
-1. Open your Supabase project and navigate to **SQL Editor**.
-2. Create a new query and paste the contents of `sql/profiles.sql`. Execute the query.
-3. Create another query and paste the contents of `sql/posts.sql`. Execute this query as well.
-
-These scripts create the `profiles` and `posts` tables (or update them if they already exist) with the necessary columns. After running them, signup and posting from the app will work without errors.
+Run the app with `npm start` (Expo) once the tables exist.
 

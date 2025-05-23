@@ -1,8 +1,7 @@
---for-you--page
--- Basic posts table linked to profiles
 
 create table if not exists posts (
-  id uuid primary key default gen_random_uuid(),
+  id uuid default uuid_generate_v4() primary key,
+
   user_id uuid references profiles(id) on delete cascade,
   username text not null,
   content text not null,

@@ -7,8 +7,7 @@ type Post = {
   id: string;
   content: string;
   username: string;
-
-  user_id?: string;
+  user_id: string;
 
   created_at: string;
 };
@@ -46,22 +45,18 @@ export default function HomeScreen() {
   };
 
   const handlePost = async () => {
-    if (!postText.trim()) return;
+    if (!postText.trim() || !user) return;
 
-    if (!user) return;
-
-
+    const username = profile.display_name || profile.username;
     const tempPost: Post = {
       id: Math.random().toString(),
-
       content: postText,
-      username: profile.display_name || profile.username,
       user_id: user.id,
+      username,
       created_at: new Date().toISOString(),
     };
 
-
-    setPosts((prev) => [tempPost, ...prev]);
+    setPosts([tempPost, ...posts]);
     setPostText('');
 
     const { data, error } = await supabase
@@ -72,18 +67,24 @@ export default function HomeScreen() {
           content: postText,
           user_id: user.id,
 
-          username: profile.display_name || profile.username,
+          username,
         },
-
       ])
-      .select()
       .single();
 
-
     if (error) {
-      // remove optimistic post on failure
       setPosts((prev) => prev.filter((p) => p.id !== tempPost.id));
-      return;
+    } else if (data) {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === tempPost.id
+            ? { ...p, id: data.id, created_at: data.created_at }
+            : p
+        )
+      );
+      // ensure feed is synchronized with server state
+      fetchPosts();
+
     }
 
     if (data) {
