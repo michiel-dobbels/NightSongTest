@@ -1,11 +1,14 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+--page
+-- Create the profiles table if it doesn't exist and ensure a display_name column
+-- Run this script in the Supabase SQL editor
 
-CREATE TABLE IF NOT EXISTS public.profiles (
-    id uuid PRIMARY KEY,
-    username text NOT NULL UNIQUE,
-    display_name text,
-    updated_at timestamptz DEFAULT now()
+create table if not exists profiles (
+  id uuid primary key references auth.users (id) on delete cascade,
+  username text not null unique,
+  display_name text,
+  created_at timestamp with time zone default now()
 );
 
-ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS display_name text;
+alter table profiles
+  add column if not exists display_name text;
+

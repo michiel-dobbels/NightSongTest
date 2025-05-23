@@ -1,9 +1,13 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+--page
+-- Create the posts table if it doesn't exist
+-- Run this in the Supabase SQL editor
 
-CREATE TABLE IF NOT EXISTS public.posts (
-    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
-    username text NOT NULL,
-    content text NOT NULL,
-    created_at timestamptz NOT NULL DEFAULT now()
+
+create table if not exists posts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete cascade,
+  username text not null,
+  content text not null,
+  created_at timestamp with time zone default now()
+
 );
