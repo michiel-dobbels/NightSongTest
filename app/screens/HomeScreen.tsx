@@ -7,11 +7,23 @@ type Post = {
   id: string;
   content: string;
   username: string;
+  user_id: string;
   created_at: string;
 };
 
+function timeAgo(dateString: string): string {
+  const diff = Date.now() - new Date(dateString).getTime();
+  const minutes = Math.floor(diff / (1000 * 60));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 export default function HomeScreen() {
-  const { session, profile } = useAuth(); // assuming profile contains username
+  const { user, profile } = useAuth();
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
 
@@ -24,26 +36,47 @@ export default function HomeScreen() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error) setPosts(data);
+    if (!error && data) setPosts(data);
   };
 
   const handlePost = async () => {
-    if (!postText.trim()) return;
+    if (!postText.trim() || !user) return;
 
-    const user = session?.user;
-    if (!user) return;
+    const username = profile.display_name || profile.username;
+    const tempPost: Post = {
+      id: Math.random().toString(),
+      content: postText,
+      user_id: user.id,
+      username,
+      created_at: new Date().toISOString(),
+    };
 
-    const { error } = await supabase.from('posts').insert([
-      {
-        content: postText,
-        user_id: user.id,
-        username: profile.display_name || profile.username,
-      },
-    ]);
+    setPosts([tempPost, ...posts]);
+    setPostText('');
 
-    if (!error) {
-      setPostText('');
-      fetchPosts(); // refresh feed
+    const { data, error } = await supabase
+      .from('posts')
+      .insert([
+        {
+          content: postText,
+          user_id: user.id,
+          username,
+        },
+      ])
+      .single();
+
+    if (error) {
+      setPosts((prev) => prev.filter((p) => p.id !== tempPost.id));
+    } else if (data) {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === tempPost.id
+            ? { ...p, id: data.id, created_at: data.created_at }
+            : p
+        )
+      );
+      // ensure feed is synchronized with server state
+      fetchPosts();
     }
   };
 
@@ -70,7 +103,7 @@ export default function HomeScreen() {
           <View style={styles.post}>
             <Text style={styles.username}>@{item.username}</Text>
             <Text>{item.content}</Text>
-            <Text style={styles.timestamp}>{new Date(item.created_at).toLocaleString()}</Text>
+            <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
           </View>
         )}
       />
