@@ -5,6 +5,7 @@ import { useAuth } from '../../AuthContext';
 
 type Post = {
   id: string;
+  user_id: string;
   content: string;
   username: string;
   user_id: string;
@@ -40,56 +41,37 @@ export default function HomeScreen() {
       .order('created_at', { ascending: false });
 
 
-    if (!error && data) setPosts(data);
-
+    if (!error && data) setPosts(data as Post[]);
   };
 
   const handlePost = async () => {
-    if (!postText.trim() || !user) return;
+    if (!postText.trim()) return;
 
-    const username = profile.display_name || profile.username;
-    const tempPost: Post = {
-      id: Math.random().toString(),
-      content: postText,
+    if (!user) return;
+
+    const text = postText;
+    const newPost: Post = {
+      id: `temp-${Date.now()}`,
       user_id: user.id,
-      username,
+      content: text,
+      username: profile.display_name || profile.username,
       created_at: new Date().toISOString(),
     };
 
-    setPosts([tempPost, ...posts]);
+    setPosts((prev) => [newPost, ...prev]);
     setPostText('');
 
     const { data, error } = await supabase
-
       .from('posts')
-      .insert([
-        {
-          content: postText,
-          user_id: user.id,
-
-          username,
-        },
-      ])
+      .insert({ content: text, user_id: user.id, username: newPost.username })
+      .select()
       .single();
 
-    if (error) {
-      setPosts((prev) => prev.filter((p) => p.id !== tempPost.id));
-    } else if (data) {
+    if (error || !data) {
+      setPosts((prev) => prev.filter((p) => p.id !== newPost.id));
+    } else {
       setPosts((prev) =>
-        prev.map((p) =>
-          p.id === tempPost.id
-            ? { ...p, id: data.id, created_at: data.created_at }
-            : p
-        )
-      );
-      // ensure feed is synchronized with server state
-      fetchPosts();
-
-    }
-
-    if (data) {
-      setPosts((prev) =>
-        prev.map((p) => (p.id === tempPost.id ? data : p))
+        prev.map((p) => (p.id === newPost.id ? (data as Post) : p))
       );
 
     }
