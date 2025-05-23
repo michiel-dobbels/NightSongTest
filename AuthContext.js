@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
     // supabase-js v1 uses a different signature than v2
     const { user: newUser, error } = await supabase.auth.signUp(
       { email, password },
-      { data: { username, display_name: username } }
+      { data: { username } }
     );
 
     if (error) {
@@ -56,18 +56,31 @@ export function AuthProvider({ children }) {
 
     const userId = newUser?.id;
     if (userId) {
-      await supabase.from('profiles').insert({
+      // Try to create the profile row. Older databases may not have a
+      // `display_name` column, so we fall back to inserting only the
+      // required fields when that insert fails.
+      const { error: profileError } = await supabase.from('profiles').insert({
         id: userId,
         username,
-        display_name: username,
       });
+
+      if (profileError) {
+        console.warn('Profile insert failed, retrying without display_name:', profileError);
+        const { error: fallbackError } = await supabase.from('profiles').insert({
+          id: userId,
+          username,
+        });
+        if (fallbackError) {
+          console.error('❌ Unable to create profile:', fallbackError);
+          return { error: fallbackError };
+        }
+      }
 
       // Immediately store the authenticated user and profile
       setUser(newUser);
       setProfile({
         id: userId,
         username,
-        display_name: username,
         email: newUser.email,
       });
     }

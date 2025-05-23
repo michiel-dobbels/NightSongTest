@@ -1,3 +1,4 @@
+--for-you--page
 -- Basic posts table linked to profiles
 
 create table if not exists posts (
@@ -7,3 +8,4 @@ create table if not exists posts (
   content text not null,
   created_at timestamp with time zone default now()
 );
+

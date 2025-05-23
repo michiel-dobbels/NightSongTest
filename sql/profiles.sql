@@ -1,3 +1,4 @@
+--for-you--page
 -- Ensure the profiles table contains a display_name column
 
 create table if not exists profiles (
@@ -10,3 +11,4 @@ create table if not exists profiles (
 alter table profiles add column if not exists display_name text;
 
 update profiles set display_name = coalesce(display_name, username);
+
